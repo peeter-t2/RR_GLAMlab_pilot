@@ -6,9 +6,9 @@ NB! These texts have the licence: Free access - restricted use. This publication
 
 The workflow can be followed in Jupyter or RStudio, to run them click on the following links.
 
-Jupyter+R: [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/peeter-t2/RR_GLAMlab_test2/master)
+Jupyter+R: [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/peeter-t2/RR_GLAMlab_pilot/master)
 
-RStudio: [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/peeter-t2/RR_GLAMlab_test2/master?urlpath=rstudio)
+RStudio: [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/gh/peeter-t2/RR_GLAMlab_pilot/master?urlpath=rstudio)
 
 
 ## Usage
@@ -24,4 +24,4 @@ The notebook gives access to:
 
 The code is licensed under the [MIT](https://choosealicense.com/licenses/mit/) license, and is free to use for whatever purpose.
 
-Stable location now at [https://github.com/peeter-t2/tidy_ERB/](https://github.com/peeter-t2/tidy_ERB/).
+Stable location now at [https://github.com/peeter-t2/RR_GLAMlab_pilot/](https://github.com/peeter-t2/RR_GLAMlab_pilot/).
