@@ -75,7 +75,7 @@ summary_allissues <- unique(all_issues[,.SD[1],.(series)][,.(title,series,firsty
 
 DT::saveWidget(datatable(summary_allissues, filter = list(position = 'top', clear = FALSE),options = list(autoWidth = FALSE,
   columnDefs = list(list(width = '200px', targets = c(1)),list(width = '200px', targets = c(2)),list(width = '50px', targets = c(2)),list(width = '50px', targets = c(2))),scrollX=T,
-    pageLength = 25)),"foo.html")
+    pageLength = 25)),"summarytable.html")
 IRdisplay::display_html('<iframe src="summarytable.html" width=100%, height=1000></iframe> ')
 
 ```
@@ -144,10 +144,10 @@ p<- all_issues_plus_access[,.N,.(year,series,licence)] %>%
   geom_col()
 ggplotly(p)
 
-htmlwidgets::saveWidget(as_widget(ggplotly(p)), "graph1.html")
+htmlwidgets::saveWidget(as_widget(ggplotly(p)), "issue_access_time.html")
 
 
-IRdisplay::display_html('<iframe src="graph1.html" width=100%, height=1000></iframe> ')
+IRdisplay::display_html('<iframe src="issue_access_time.html" width=100%, height=1000></iframe> ')
 ```
 
 ```{r}
@@ -222,12 +222,12 @@ IRdisplay::display_html('<iframe src="foo.html" width=100%, height=1000></iframe
 ## Download texts from the collection
 
 
-This code allows texts to be downloaded from the collection. Currently, the code links to a random sample of 1,000 collection files that contain a bit less than 1,000,000 articles altogether. In the repository is an index file `file_index_sample.tsv.zip`, this links the article unique ids to the .zip archives that they are placed in. With that file, we can take a subset of the collection, download only the files relevant to us, and process them after.
+This code allows texts to be downloaded from the collection. Currently, the code links to all of the fully open publications in 3,747 collection files that contain around 3.7 million articles altogether. In the repository is an index file `file_index_allopen.tsv.zip`, this links the article unique ids to the .zip archives that they are placed in. With that file, we can take a subset of the collection, download only the files relevant to us, and process them after.
 
 ```{r}
 
 # File index contains article unique id-s and the references to the collection files that they are in.
-file_index <- fread("unzip -p file_index_sample.tsv.zip")
+file_index <- fread("unzip -p file_index_allopen.tsv.zip")
 file_index[,DocumentID:=str_remove(filename,"\\..*")] # Get issue name from the article name.
 
 
