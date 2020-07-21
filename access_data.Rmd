@@ -1,0 +1,145 @@
+---
+title: "Example R Markdown Notebook"
+output:
+  html_document:
+    df_print: paged
+jupyter:
+  kernelspec:
+    display_name: R
+    language: R
+    name: ir
+  language_info:
+    codemirror_mode: r
+    file_extension: .r
+    mimetype: text/x-r-source
+    name: R
+    pygments_lexer: r
+    version: 3.4.3
+---
+
+## NLE Digital Newspaper Collection (DEA)
+
+This notebook presents a pilot workflow on accessing digitized newspaper data in the National Library of Estonia. The collection currently includes 386,950 issues from 2200 periodical publications (including journals, magazines and newspapers). This amounts to a total of 3,635,503 pages of text and 6,298,369 articles segmented from this. Some of these texts are free to access, others need to follow some access restrictions due to copyright and other legal requirements. This notebook connects to a subsample of freely accessible texts, amounting to ~1,000,000 articles. 
+
+NB! These texts have the licence: Free access - restricted use. This publication's copyright protection has expired but the rights of works contained in the publication may be protected. The works may be used for private purposes or study and research purposes. In other cases please ascertain that the copyright term has expired.
+
+### Usage
+
+The Notebook runs R-3.6.0 on the Jupyter Notebook, so regular R commands will work. To run a block in Jupyter Notebook, select the block and click on he the > 'run' icon above. To run a block in RStudio find the green > on top of the block.
+
+
+### Required libraries
+
+```{r, results=F, warning=F,messages=F}
+library(data.table)
+library(tidyverse)
+library(lubridate)
+library(plotly)
+library(utils)
+library(DT)
+
+```
+
+
+## Download texts from the collection
+
+
+This code allows texts to be downloaded from the collection. Currently, the code links to all of the fully open publications in 3,747 collection files that contain around 3.7 million articles altogether. In the repository is an index file `file_index_allopen.tsv.zip`, this links the article unique ids to the .zip archives that they are placed in. With that file, we can take a subset of the collection, download only the files relevant to us, and process them after.
+
+```{r}
+
+# Step 1. Download the latest metadata file for the collection (if you have not done so already)
+system(paste0("wget --quiet data.digar.ee/text/all_issues_access.zip -O all_issues_access.zip"))
+
+```
+
+
+```{r}
+
+# Read in the metadata file for all issues in the collection
+all_issues <- fread("unzip -p /media/peeter/Maxtor/GLAM_content/zipped_by_year_useraccess/toupload/all_issues_access.zip",sep="\t")[access_now==T]
+
+# Let's build a subsample. Let's take all newspaper articles from the 1890s.
+subset <- all_issues[str_detect(DocumentType,"NEWSPAPER")&year==1895]
+
+```
+
+
+
+```{r}
+
+# We can look at an overview of the subset.
+subset[,issues_subset:=.N,.(keyid)]
+subset[,firstyear:=min(year),.(keyid)]
+subset[,lastyear:=max(year),.(keyid)]
+
+subset_info <- subset[,.SD[1],.(keyid)]
+summary_subset <- unique(subset_info[,.(keyid,firstyear,lastyear,issues_subset)])
+datatable(summary_subset)
+
+
+```
+
+
+
+
+### Preloading the relevant collection to the environment
+
+The text files associated with this notebook are distributed into compressed .zip files that include up to 1,000 articles each. The directory structure retains the publication and date information, and the unique id is given also in the file. The article is placed on one line with html tags, and the unique id is given on the same line before it, separated by the tag. The files within the .zip archives also contain a watermark that these files originate the National Library of Estonia collections.
+
+
+```{r}
+
+preloadcollectionname <- "preloadedcollection1"
+# We use the subset with fileinfo to get the list of relevant files, and download them to the virtual environment that we use.
+requiredtextfiles <- subset[sections_exist==T,unique(zippath_sections)]
+dir.create(preloadcollectionname)
+dir.create(paste0(preloadcollectionname,"/text_sections/"))
+for (i in requiredtextfiles){
+  system(paste0("wget --quiet data.digar.ee/text/text_sections/",i," -O ",preloadcollectionname,"/text_sections/",basename(i)))
+}
+
+dir.create(paste0(preloadcollectionname,"/meta_sections/"))
+requiredmetafiles <- subset[zippath_sections_meta!="",unique(zippath_sections_meta)]
+for (i in requiredmetafiles){
+  system(paste0("wget --quiet data.digar.ee/text/meta_sections",i," -O ",preloadcollectionname,"/meta_sections/",basename(i)))
+}
+  
+
+  
+```
+
+
+
+
+
+### Let's download a bigger sample
+
+
+```{r}
+
+#Another possible sample
+#This one takes all publications containing the word postimees (e.g. eestipostimees, parnupostimees, postimeesew) between 1880 and 1900.
+subset <- all_issues[str_detect(keyid,"postimees")&year>1880&year<1920]
+
+preloadcollectionname <- "preloadedcollection2"
+# We use the subset with fileinfo to get the list of relevant files, and download them to the virtual environment that we use.
+requiredtextfiles <- subset[sections_exist==T,unique(zippath_sections)]
+dir.create(preloadcollectionname)
+dir.create(paste0(preloadcollectionname,"/text_sections/"))
+for (i in requiredtextfiles){
+  system(paste0("wget --quiet data.digar.ee/text/text_sections/",i," -O ",preloadcollectionname,"/text_sections/",i))
+}
+
+requiredmetafiles <- subset[,unique(zippath_sections_meta)]
+for (i in requiredmetafiles){
+  system(paste0("wget --quiet data.digar.ee/text/meta_sections",i," -O ",preloadcollectionname,"/meta_sections/",i))
+}
+  
+
+  
+
+  
+```
+
+
