@@ -57,7 +57,7 @@ system(paste0("wget --quiet data.digar.ee/text/all_issues_access.zip -O all_issu
 ```{r}
 
 # Read in the metadata file for all issues in the collection
-all_issues <- fread("unzip -p /media/peeter/Maxtor/GLAM_content/zipped_by_year_useraccess/toupload/all_issues_access.zip",sep="\t")[access_now==T]
+all_issues <- fread("unzip -p all_issues_access.zip",sep="\t")[access_now==T]
 
 # Let's build a subsample. Let's take all newspaper articles from the 1890s.
 subset <- all_issues[str_detect(DocumentType,"NEWSPAPER")&year==1895]
