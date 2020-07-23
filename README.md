@@ -16,7 +16,7 @@ RStudio: [![Binder](http://mybinder.org/badge_logo.svg)](http://mybinder.org/v2/
 There are three script files currently in this repository.
 - *data_overview.Rmd* - gives an overview of the collection and allows further exploration of the metadata.
 - *access_data.Rmd* - link to the archived full-text files on [data.digar.ee](data.digar.ee)
-- *search_through_collection.Rmd* - a simple workflow to search texts and export concordances for later study.
+- *search_and_concordance.Rmd* - a simple workflow to search texts and export concordances for later study.
 
 The Notebooks are currently run in a [MyBinder environment](https://mybinder.org/) which has memory limitations, allowing at least 1Gb of RAM, but no more than 2Gb (if memory is exceeded the system is restarted). For this, it is recommended to work with no more than 200 data files at the same time. Binder is meant for short term usage. It will automatically shut down user sessions that have more than 10 minutes of inactivity (if you leave your window open, this will be counted as “activity”) and can be expected to reliably work for 12 hours.
 

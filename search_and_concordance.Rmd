@@ -1,0 +1,152 @@
+---
+title: "Simple concordancer"
+output:
+  html_document:
+    df_print: paged
+jupyter:
+  kernelspec:
+    display_name: R
+    language: R
+    name: ir
+  language_info:
+    codemirror_mode: r
+    file_extension: .r
+    mimetype: text/x-r-source
+    name: R
+    pygments_lexer: r
+    version: 3.4.3
+---
+
+## Word search and concordances (a simple workflow)
+
+We have gathered the collection we want to search through into a folder, either on our local computer, or on the Binder server, where it is available temporarily. We would then like to search through the contents of these files.
+
+```{r, results=F, warning=F,messages=F,include=F}
+
+# Read the required libraries
+
+library(data.table)
+library(tidyverse)
+library(lubridate)
+library(plotly)
+library(utils)
+library(DT)
+
+```
+
+As an example let's try to find some text examples on early technologies for mobility. We can look for 'jalgratas' (bicycle), 'mootorratas' (motorbike), 'raudtee' (railroad), 'aurulaew' (steamboat). 
+
+As an example, we can try to look for some texts on early technologies for mobility. For instance, let's try to find all the texts about bicycles from Postimees issues in 1890-1910. We can start with texts for just the bicycle. We can use the simple command line tool zip to temporarily extract the file and the command line tool grep to search through these files. The application will return all of the lines that contain the search term. Since each article is on one row with its id, we can easily compile our search result set like this.
+
+### Finding texts with particular keywords within the set
+
+Use the query below to search for articles/pages that contain a string. Here, example 'jalgratas' is used. This workflow supports regular expressions. See the manual on [grep](https://www.gnu.org/software/grep/manual/grep.html) for controls.
+
+```{r}
+
+searchterm <- "jalgratas"
+searchfile <- "search1.txt"
+collectionname <- "preloadedcollection1"
+
+#Technically, each article is in a separate file and in a single row. The same row also contains the article unique identifier.
+system(paste0("rm ",searchfile,"; for file in ", collectionname,"/sections/*.zip; do unzip -c $file | grep -iE '",searchterm,"' >> ",searchfile,"; done"))
+
+#Writing the query out on command line would look like this.
+#system(paste0("rm search2.txt; for file in preloadedcollection/*.zip; do unzip -c $file | grep -i ' aurulaew' >> search2.txt; done"))
+#system(paste0("rm search3.txt; for file in preloadedcollection/*.zip; do unzip -c $file | grep -i ' õnnetus' >> search3.txt; done"))
+
+# You can also simply search for nothing, and get all the texts in the collection
+#system(paste0("for file in preloadedcollection/*.zip; do unzip -c $file | grep -i ' ' >> alltexts.txt; done"))
+
+
+```
+
+We can then read all the search results into the set and combine with the metadata on the articles. The metadata file gives us more info on the article and its digitization, for example the place of publication, the date of publication, or the expected quality of the OCR estimated by the OCR software. Additionally, through article segmentation, different types of articles can be distinguished. For example, we can use the metadata to get only articles from the section of advertisements. Bare in mind that this classification used various heuristics in digitization and may sometimes be imprecise.
+
+Metadata is given in the collection as a separate file, since these files are smaller, they are not split by year as the raw text is.
+
+Here, read the search results and merge with metadata. Save the results as .tsv.
+
+```{r}
+
+# Read the search results from file
+searchfile <- "output/search1.txt"
+resultsfile <- "output/our_results1.tsv"
+
+# All the search results from our preloaded collection
+texts <- fread(searchfile,header=F,sep="\t")
+#texts[,V3:=str_remove(V1,"\\..*")]
+
+metafiles <- list.files(path=paste0(collectionname,"/sections_metas"),pattern="zip",full.names = T)
+subsetmeta <- rbindlist(lapply(paste0("unzip -p ",metafiles),fread,fill=T),idcol=T)
+#subsetmeta <- rbindlist(lapply(metafiles,fread,fill=T),idcol=T)## all_files in meta)
+
+texts_w_meta <- merge(texts,subsetmeta[,.(LogicalSectionID,LogicalSectionTitle,LogicalSectionType,MeanOCRAccuracyVol,docid)],by.x="V1",by.y="LogicalSectionID")
+texts_w_meta2<- merge(texts_w_meta,all_issues[,.(DocumentID,DocumentType,DocumentTitle,language,country,place,publisher,ester_id,keyid)],by.x="docid",by.y="DocumentID")
+
+subsetwewant <- texts_w_meta2[LogicalSectionType=="ADVERTISEMENT"]
+
+infowewant <- subsetwewant[,.(docid,V1,V2,place,keyid)]
+
+fwrite(infowewant,resultsfile,sep="\t")
+
+```
+
+
+### Simplest concordancer
+
+```{r}
+
+library(data.table)
+library(stringr)
+library(stringi)
+library(openxlsx)
+
+```
+
+
+1. Use the code above to compile a file with search results (e.g. 'search1.txt') or search results and metadata (e.g. 'our_results1.tsv')
+2. Set query below, and read the file.
+3. Take +/- 100 character concordances, and export as excel file.
+
+
+```{r}
+
+query = "[Jj]algratas"
+
+# Read in the raw search results
+#texts <- fread(searchfile,header=F,sep="\t")
+
+# Or read search results with metadata
+texts <- fread(resultsfile,header=T,sep="\t")
+
+# Add extra characters in line beginning
+texts[,text:=paste0(paste0(rep("-",100),collapse=""),V2,paste0(rep("-",100),collapse=""))]
+# Extract concordances
+concordances <- texts[,.(concordance=unlist(stri_extract_all_regex(text,paste0(".{100}",query,".{100}"), opts_fixed = list(case_insensitive = TRUE)))),by=V1]
+
+# If some responses did not have the keyword we looked for
+concordances <- concordances[!is.na(concordance)]
+
+# Remove the temporary extra characters (Optional)
+concordances[,concordance:=str_remove_all(concordance,"^-+")]
+concordances[,concordance:=str_remove_all(concordance,"-+$")]
+
+# Use meta instead
+# Extract information on years. The article id is transparent to the year and date of publication. First 4 numbers are the year.
+#concordance[,keyid:=basename(str_remove(V1,".*:"))]
+concordances[,year:=str_extract(V1,"[0-9]{4}")]
+
+# (Optional) Select the required years
+#concordance2 <- concordance[year<1911&year>1889]
+
+# Add random row ids to simplify taking a random sample. If we order them by random number, we can simply take e.g. the first 50 or 500 results if we want to manually check some of them.
+concordances[,randomid := sample(nrow(concordances))]
+
+# Write out as excel file
+write.xlsx(concordances[,.(randomid,year,V1,concordance)][order(randomid)], "output/search_concordances_by_randomid.xlsx")
+write.xlsx(concordances[,.(year,V1,concordance)][order(year,V1)], "output/search_concordances_by_year.xlsx")
+
+```
+
+Note on the data. While the newspapers have often been segmented and available per article, advertisements are difficult to identify and often whole sections of advertisements are given as one article. In the search results you can see that advertisements on bicycles also contain a noticeable amount of text on other topics. Here, you will have to continue with some cleaning and post-processing. For example, the paragraph end markers </p> can be a good way to split the text into parts that are relevant. This solution will depend on the question: bicycle advertisements usually aren't longer than one paragraph, but other texts may have other frequent boundaries.
