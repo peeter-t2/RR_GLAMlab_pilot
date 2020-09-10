@@ -29,7 +29,7 @@ The code is licensed under the [MIT](https://choosealicense.com/licenses/mit/) l
 
 The workflow is registered at Zenodo, and can be cited as
 
-- Tinits, Peeter (2020). Rahvusraamatukogu digilabori tööriistad tekstimaterjali ligipääsuks ja töötlemiseks. Zenodo. http://doi.org/10.5281/zenodo.3953795
+- Tinits, Peeter (2020). Eesti Rahvusraamatukogu digilabori tööriistad tekstimaterjali ligipääsuks ja töötlemiseks. Zenodo. http://doi.org/10.5281/zenodo.3953795
 - Tinits, Peeter (2020). GLAMlab toolkit to access and analyse texts at the National Library of Estonia. Zenodo. http://doi.org/10.5281/zenodo.3953795
 
 Stable location now at [https://github.com/peeter-t2/RR_GLAMlab_pilot/](https://github.com/peeter-t2/RR_GLAMlab_pilot/).
